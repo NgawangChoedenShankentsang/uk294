@@ -16,7 +16,7 @@
         <div class="dropdown">
             <button class="dropbtn active">Product<i class="fa fa-caret-down"></i></button>
             <div class="dropdown-content">
-              <a href="#">Create</a>
+              <a href="create_product.html">Create</a>
               <a href="#">Update</a>
               <a href="#">Delete</a>
               <a href="#">Read</a>
@@ -24,7 +24,7 @@
             </div>
         </div> 
         <div class="dropdown">
-            <button class="dropbtn">Category<i class="fa fa-caret-down"></i></button>
+            <button class="dropbtn-cat">Category<i class="fa fa-caret-down"></i></button>
             <div class="dropdown-content">
               <a href="create_category.html">Create</a>
               <a href="#">Update</a>
@@ -37,15 +37,16 @@
 
     <div class="content-container">
         <div class="content">
+            <h1>	&lt; CREATE  &gt; </h1>
             <form onsubmit="onEditCategoryFormSubmitted(event);">
                 <div class="field">
                 <label for="name-field">Category Name</label>
                 <input type="text" id="name-field" required>
                 </div>
-    
+                
                 <div class="field">
-                <input type="checkbox" id="active-checkbox">
                 <label for="active-checkbox">Active</label>
+                <input type="checkbox" id="active-checkbox">
                 </div>
     
                 <div class="field">
