@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
+</head>
+<body>
+
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="login.html">Login</a>
+
+        <div class="dropdown">
+            <button class="dropbtn active">Product<i class="fa fa-caret-down"></i></button>
+            <div class="dropdown-content">
+              <a href="#">Create</a>
+              <a href="#">Update</a>
+              <a href="#">Delete</a>
+              <a href="#">Read</a>
+              <a href="#">List All</a>
+            </div>
+        </div> 
+        <div class="dropdown">
+            <button class="dropbtn">Category<i class="fa fa-caret-down"></i></button>
+            <div class="dropdown-content">
+              <a href="create_category.html">Create</a>
+              <a href="#">Update</a>
+              <a href="#">Delete</a>
+              <a href="#">Read</a>
+              <a href="#">List All</a>
+            </div>
+        </div> 
+    </div>
+
+    <div class="content-container">
+        <div class="content">
+            <form onsubmit="onEditCategoryFormSubmitted(event);">
+                <div class="field">
+                <label for="name-field">Category Name</label>
+                <input type="text" id="name-field" required>
+                </div>
+    
+                <div class="field">
+                <input type="checkbox" id="active-checkbox">
+                <label for="active-checkbox">Active</label>
+                </div>
+    
+                <div class="field">
+                <button type="submit">Save and Close</button>
+                </div>
+            </form>
+        </div>
+    </div>  
+</body>
+</html>
