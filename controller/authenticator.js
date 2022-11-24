@@ -12,11 +12,11 @@ function pressedButton(event) {
 
   requestLogin = new XMLHttpRequest();
   requestLogin.open("POST", "../API/V1/Authenticate");
-  requestLogin.onreadystatechange = onSignInResponsed;
+  requestLogin.onreadystatechange = requestLogin;
   requestLogin.send(JSON.stringify(signInData));
 }
 
-  function onSignInResponsed(event) {
+  function requestLogin(event) {
     if (requestLogin.readyState < 4) {
       return;
     }
