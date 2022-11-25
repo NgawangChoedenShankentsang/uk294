@@ -1,61 +1,60 @@
 <?php
-//error for old version 
-ini_set('display_errors', '1');
-ini_set('display_startup_errors', '1');
-error_reporting(E_ALL);
+	ini_set('display_errors', '1');
+	ini_set('display_startup_errors', '1');
+	error_reporting(E_ALL);
 
-//set conten-type for all endpoints
-header("Content-Type: application/json");
+	use Psr\Http\Message\ResponseInterface as Response;
+	use Psr\Http\Message\ServerRequestInterface as Request;
+	use Slim\Factory\AppFactory;
+	use ReallySimpleJWT\Token;
 
-//class that needed
-use Psr\Http\Message\ResponseInterface as Response; 
-use Psr\Http\Message\ServerRequestInterface as Request;
-use Slim\Factory\AppFactory;
-use ReallySimpleJWT\Token;
+	require __DIR__ . "/../vendor/autoload.php";
 
-//path to file: _DIR_
-require __DIR__ . "/../vendor/autoload.php";
-require "model/action.php";
-require_once "config/config.php";
+	require "util/database.php";
 
-$app = AppFactory::create();
+	header("Content-Type: application/json");
 
-$app->setBasePath("/API/V1");
+	$app = AppFactory::create();
+	$app->setBasePath("/API/V1");
+	/**
+	 * @OA\Post(
+	 *     path="/Authenticate",
+	 *     summary="Checks the provided username and password and returns an access token if they are valid. The access token is saved in the cookies.",
+	 *     tags={"Authentication"},
+	 *     requestBody=@OA\RequestBody(
+	 *         request="/Authenticate",
+	 *         required=true,
+	 *         description="Username and password",
+	 *         @OA\MediaType(
+	 *             mediaType="application/json",
+	 *             @OA\Schema(
+	 *                 @OA\Property(property="username", type="string", example="root"),
+	 *                 @OA\Property(property="password", type="string", example="sUP3R53CR3T#")
+	 *             )
+	 *         )
+	 *     ),
+	 *     @OA\Response(response="200", description="Success")
+	 * )
+	 */
+	$app->post("/Authenticate", function (Request $request, Response $response, $args) {
+		$data = json_decode(file_get_contents("php://input"), true);
 
-/**
- * @OA\Info(title="ük295: Backend für Applikation realisieren", version="1")
- */
+		require "util/config.php";
+		if (!$data || !isset($data["username"]) || !isset($data["password"]) || $data["username"] != $api_username || $data["password"] != $api_password) {
+			http_response_code(403);
+			die("Invalid credentials.");
+		}
 
-/**
- * Returns an error to the client with the given message and status code.
- * This will immediately return the response and end all scripts.
- * @param $message The error message string.
- * @param $code The response code to set for the response.
- */
-function error($message, $code){
-    $error = array("message" => $message);
-    echo json_encode($error);
-    http_response_code($code);
-    die();
-}
+		//Generate the access token and store it in a cookie.
+		$token = Token::create($data["username"], $data["password"], time() + 3600, "localhost");
+		setcookie("token", $token, time() + 3600);
 
-/**
- * Returns an success to the client with the given message and status code.
- * This will immediately return the response and end all scripts.
- * @param $message The succcess message string.
- * @param $code The response code to set for the response.
- */
-function success($message, $code){
-    $success = array("message" => $message);
-    echo json_encode($success);
-    http_response_code($code);
-    die();
-}
+		echo "Success.";
+		return $response;
+	});
 
-//path to endpoints
-require "controller/category_endpoints.php";
-require "controller/product_endpoints.php";
+	require "routes/product.php";
+	require "routes/category.php";
 
-$app->run();
-
+	$app->run();
 ?>

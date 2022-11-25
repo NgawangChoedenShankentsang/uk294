@@ -1,9 +1,9 @@
 # Really Simple JSON Web Tokens
-[![Actions Status](https://github.com/robdwaller/reallysimplejwt/workflows/ci/badge.svg)](https://github.com/robdwaller/reallysimplejwt/actions) [![codecov](https://codecov.io/gh/RobDWaller/ReallySimpleJWT/branch/master/graph/badge.svg)](https://codecov.io/gh/RobDWaller/ReallySimpleJWT) [![Infection MSI](https://badge.stryker-mutator.io/github.com/RobDWaller/ReallySimpleJWT/master)](https://infection.github.io) [![StyleCI](https://styleci.io/repos/82379868/shield?branch=master)](https://styleci.io/repos/82379868) [![Latest Stable Version](https://poser.pugx.org/rbdwllr/reallysimplejwt/v/stable)](https://packagist.org/packages/rbdwllr/reallysimplejwt) ![Packagist PHP Version Support](https://img.shields.io/packagist/php-v/rbdwllr/reallysimplejwt) [![Total Downloads](https://poser.pugx.org/rbdwllr/reallysimplejwt/downloads)](https://packagist.org/packages/rbdwllr/reallysimplejwt)
+[![Actions Status](https://github.com/robdwaller/reallysimplejwt/workflows/ci/badge.svg)](https://github.com/robdwaller/reallysimplejwt/actions) [![codecov](https://codecov.io/gh/RobDWaller/ReallySimpleJWT/branch/master/graph/badge.svg)](https://codecov.io/gh/RobDWaller/ReallySimpleJWT) [![Infection MSI](https://badge.stryker-mutator.io/github.com/RobDWaller/ReallySimpleJWT/master)](https://infection.github.io) [![StyleCI](https://styleci.io/repos/82379868/shield?branch=master)](https://styleci.io/repos/82379868) [![Latest Stable Version](https://poser.pugx.org/rbdwllr/reallysimplejwt/v/stable)](https://packagist.org/packages/rbdwllr/reallysimplejwt) ![PHP Version Support](https://img.shields.io/travis/php-v/RobDWaller/ReallySimpleJWT/master) [![Total Downloads](https://poser.pugx.org/rbdwllr/reallysimplejwt/downloads)](https://packagist.org/packages/rbdwllr/reallysimplejwt)
 
 A simple PHP library for creating JSON Web Tokens that uses HMAC SHA256 to sign signatures. For basic usage the library exposes a static interface to allow developers to create a token that stores a user identifier and expiration time.
 
-The library is also open to extension, developers can define their own encoding and secret standards, set all the [RFC standard](https://tools.ietf.org/html/rfc7519) JWT claims, and set their own private claims.
+The library is also open to extension, developers can define their own encoding standard, their own secret validation, set all the [RFC standard](https://tools.ietf.org/html/rfc7519) JWT claims, and set their own private claims.
 
 You can easily integrate ReallySimpleJWT with PSR-7 / PSR-15 compliant frameworks such as [Slim PHP](https://packagist.org/packages/slim/slim) with the [PSR-JWT middleware library](https://github.com/RobDWaller/psr-jwt). Please read the [framework integration documentation](#framework-integration-with-psr-jwt-middleware) to learn more.
 
@@ -17,18 +17,17 @@ If you need to read tokens in the browser please take a look at our JavaScript /
     - [Create Token](#create-token)
     - [Validate Token](#validate-token)
     - [Get Header and Payload Claims Data](#get-header-and-payload-claims-data)
-    - [Build, Parse and Validate Factory Methods](#build-parse-and-validate-factory-methods)
-    - [Non-Static Usage](#non-static-usage)
+    - [Build and Parse Factory Methods](#build-and-parse-factory-methods)
 - [Advanced Usage](#advanced-usage)
     - [Create Custom Token](#create-custom-token)
     - [Access the Token](#access-the-token)
-    - [Parse Token](#parse-token)
+    - [Parse and Validate Token](#parse-and-validate-token)
     - [Access Token Claims Data](#access-token-claims-data)
-    - [Token Validation Methods](#token-validation-methods)
     - [Custom Encoding](#custom-encoding)
 - [Error Messages and Codes](#error-messages-and-codes)
 - [Token Security](#token-security)
-    - [Secret Strength](#secret-strength)
+    - [Signature Secret](#signature-secret)
+    - [Custom Secrets](#custom-secrets)
 - [Framework Integration With PSR-JWT Middleware](#framework-integration-with-psr-jwt-middleware)
 - [Browser Integration With RS-JWT](#browser-integration-with-rs-jwt)
 
@@ -71,7 +70,7 @@ If a malicious user attempts to edit the header or payload claims they will be u
 
 To install this package you will need to install [Composer](https://getcomposer.org/) and then run `composer init`. Once this is done you can install the package via the command line or by editing the composer.json file created by the `composer init` command.
 
-Finally you will need to reference the composer autoloader in your PHP code, `require 'vendor/autoload.php';`. The location of the autoload file will differ dependent on where your code is run and may not be required if you are using a framework.
+Finally you will need to reference the composer autoloader in your PHP code, `require 'vendor/autoload.php';`. The location of the autoload file will differ dependent on where your code is run. Also you will not need to reference the autoload file if you are using a framework like Laravel or Symfony.
 
 **Install via Composer on the command line:**
 
@@ -85,7 +84,7 @@ Add the following to your composer.json file:
 
 ```javascript
 "require": {
-    "rbdwllr/reallysimplejwt": "^5.0"
+    "rbdwllr/reallysimplejwt": "^2.0"
 }
 ```
 
@@ -103,10 +102,12 @@ For basic usage the library exposes a set of static methods via the `ReallySimpl
 
 Call the `create()` static method and pass in a user identifier, a secret, an expiration date time number and the token issuer.
 
-This will return a token string on success and throw a `ReallySimpleJWT\Exception\BuildException` on failure.
+This will return a token string on success and throw a `ReallySimpleJWT\Exception\ValidateException` on failure.
 
 ```php
 use ReallySimpleJWT\Token;
+
+require 'vendor/autoload.php';
 
 $userId = 12;
 $secret = 'sec!ReT423*&';
@@ -120,6 +121,8 @@ To create a more customised token developers can use the `customPayload()` metho
 
 ```php
 use ReallySimpleJWT\Token;
+
+require 'vendor/autoload.php';
 
 $payload = [
     'iat' => time(),
@@ -137,29 +140,19 @@ On success the `customPayload()` method will return a JWT token string and on fa
 
 ### Validate Token
 
-To validate a JSON web token call the `validate()` static method, pass in the token string and the secret. The validate method checks the token structure is correct and the signature is valid.
+To validate a JSON web token call the `validate()` static method, pass in the token string and the secret. The validate method checks the token structure is correct, the signature is valid, the expiration time has not expired and the not before time has elapsed.
 
 It will return true on success and false on failure.
 
 ```php
 use ReallySimpleJWT\Token;
 
+require 'vendor/autoload.php';
+
 $token = 'aaa.bbb.ccc';
 $secret = 'sec!ReT423*&';
 
 $result = Token::validate($token, $secret);
-```
-
-There are also methods available to validate the token's expiration claim and not before claim. Both will return true on success and false on failure.
-
-```php
-use ReallySimpleJWT\Token;
-
-$token = 'aaa.bbb.ccc';
-
-Token::validateExpiration($token);
-
-Token::validateNotBefore($token);
 ```
 
 ### Get Header and Payload Claims Data
@@ -171,54 +164,31 @@ Both methods will return an associative array on success and throw an exception 
 ```php
 use ReallySimpleJWT\Token;
 
+require 'vendor/autoload.php';
+
 $token = 'aaa.bbb.ccc';
+$secret = 'sec!ReT423*&';
 
 // Return the header claims
-Token::getHeader($token);
+Token::getHeader($token, $secret);
 
 // Return the payload claims
-Token::getPayload($token);
+Token::getPayload($token, $secret);
 ```
 
-### Build, Parse and Validate Factory Methods
+### Build and Parse Factory Methods
 
-The `ReallySimpleJWT\Token` class also provides three factory methods to gain access to the core `ReallySimpleJWT\Build`, `ReallySimpleJWT\Parse`, and `ReallySimpleJWT\Validate` classes. These classes allow you to build custom tokens, and parse and validate tokens as you see fit.
+The `ReallySimpleJWT\Token` class also provides two factory methods to gain access to the core `ReallySimpleJWT\Build` and `ReallySimpleJWT\Parse` classes. These classes allow you to build custom tokens and parse and validate tokens as you see fit.
 
 ```php
 Token::builder(); // Returns an instance of ReallySimpleJWT\Build
 
-Token::parser($token); // Returns an instance of ReallySimpleJWT\Parse
-
-Token::validator($token, $secret); // Returns an instance of ReallySimpleJWT\Validate
+Token::parser($token, $secret); // Returns an instance of ReallySimpleJWT\Parse
 ```
-
-### Non-Static Usage
-
-The `ReallySimpleJWT\Token` class is just a wrapper for the `ReallySimpleJWT\Tokens` class which can be used directly for those who'd prefer to instantiate and inject the functionality.
-
-```php
-use ReallySimpleJWT\Tokens;
-
-$tokens = new Tokens();
-
-$id = 52;
-$secret = 'sec!ReT423*&';
-$expiration = time() + 50;
-$issuer = 'localhost';
-
-$token = $tokens->create('id', $id, $secret, $expiration, $issuer);
-$token->getToken();
-```
-
-Please note when calling the `create()` and `customPayload()` methods on the `Tokens` class they will return an instance of the `Jwt` class unlike the `Token` class which will return a token string.
-
-In addition, the `create()` method has a slightly different signature to the `Tokens` class as a user identifier key must be passed in.
-
-`create(string $userKey, $userId, string $secret, int $expiration, string $issuer): Jwt`
 
 ## Advanced Usage
 
-To create customised JSON Web Tokens developers need to access the `ReallySimpleJWT\Build`, `ReallySimpleJWT\Parse` and `ReallySimpleJWT\Validate` classes directly.
+To create customised JSON Web Tokens developers need to access the `ReallySimpleJWT\Build` and `ReallySimpleJWT\Parse` classes directly.
 
 ### Create Custom Token
 
@@ -226,19 +196,20 @@ The `ReallySimpleJWT\Build` class allows you to create a completely unique JSON 
 
 The class also allows developers to set custom header and payload claims via the `setHeaderClaim()` and `setPayloadClaim()` methods.
 
-The methods can be chained together and when the `build()` method is called the token will be generated and returned as a `ReallySimpleJWT\Jwt` object.
+The methods can be chained together and when the `build()` method is called the token will be generated and returned within a `ReallySimpleJWT\Jwt` object.
 
 ```php
 use ReallySimpleJWT\Build;
-use ReallySimpleJWT\Helper\Validator;
-use ReallySimpleJWT\Encoders\EncodeHS256;
+use ReallySimpleJWT\Validate;
+use ReallySimpleJWT\Encode;
 
-$secret = '!secReT$123*';
+require 'vendor/autoload.php';
 
-$build = new Build('JWT', new Validator(), new EncodeHS256($secret));
+$build = new Build('JWT', new Validate(), new Encode());
 
 $token = $build->setContentType('JWT')
     ->setHeaderClaim('info', 'foo')
+    ->setSecret('!secReT$123*')
     ->setIssuer('localhost')
     ->setSubject('admins')
     ->setAudience('https://google.com')
@@ -252,37 +223,62 @@ $token = $build->setContentType('JWT')
 
 ### Access the Token
 
-A `ReallySimpleJWT\Jwt` object is returned when a developer calls the `build()` method on the `ReallySimpleJWT\Build` class. The Jwt class offers a single `getToken()` method which returns the token string.
+A `ReallySimpleJWT\Jwt` object is returned when a developer calls the `build()` method on the `ReallySimpleJWT\Build` class. The Jwt class offers two methods `getToken()` and `getSecret()`. The former returns the generated JSON Web Token and the latter returns the secret used for the token signature.
 
-To parse a JSON Web Token via the `ReallySimpleJWT\Parse` class a developer must first create a new `ReallySimpleJWT\Jwt` object by injecting the token string on instantiation. The Jwt class will validate the structure of the token on instantiation to ensure integrity.
+To parse a JSON Web Token via the `ReallySimpleJWT\Parse` class a developer must first create a new `ReallySimpleJWT\Jwt` object by injecting the token and secret.
 
 ```php
 use ReallySimpleJWT\Jwt;
 
-$token = 'aaa.bbb.ccc';
+require 'vendor/autoload.php';
 
-$jwt = new Jwt($token);
+$token = 'aaa.bbb.ccc';
+$secret = '!secReT$123*';
+
+$jwt = new Jwt($token, $secret);
 
 // Return the token
 $jwt->getToken();
+
+// Return the secret
+$jwt->getSecret();
 ```
 
-### Parse Token
+### Parse and Validate Token
 
-The `ReallySimpleJWT\Parse` class allows a developer to parse a JWT and the `parse()` method will decode the JSON Web Token and return the result as a `ReallySimpleJWT\Parsed` object. This will provide access to the header and payload claims data the token holds.
+The `ReallySimpleJWT\Parse` class allows a developer to parse and validate a JSON Web Token. Four validation methods are available which can all be chained:
+
+- `validate()` confirms the structure of the token and the validity of the signature.
+- `validateExpiration()` confirms the token expiration claim (`exp`) has not expired.
+- `validateNotBefore()` confirms the token not before claim (`nbf`) has elapsed.
+- `validateAudience()` confirms the token audience claim (`aud`) matches what is expected.
+- `validateAlgorithm()` confirms the token algorithm claim (`alg`) matches what is expected and is valid (See: [RFC 7518](https://www.rfc-editor.org/rfc/rfc7518.html)).
+
+Each validation method will throw a `ReallySimpleJWT\Exception\ValidateException` if there is anything wrong with the supplied token.
+
+The `parse()` method which should be called after validation is complete will decode the JSON Web Token. It will then return the result as a `ReallySimpleJWT\Parsed` object. This will provide access to the claims data the token holds in the header and the payload.
 
 ```php
 use ReallySimpleJWT\Parse;
 use ReallySimpleJWT\Jwt;
-use ReallySimpleJWT\Decode;
+use ReallySimpleJWT\Validate;
+use ReallySimpleJWT\Encode;
+
+require 'vendor/autoload.php';
 
 $token = 'aaa.bbb.ccc';
+$secret = '!secReT$123*';
 
-$jwt = new Jwt($token);
+$jwt = new Jwt($token, $secret);
 
-$parse = new Parse($jwt, new Decode());
+$parse = new Parse($jwt, new Validate(), new Encode());
 
-$parsed = $parse->parse();
+$parsed = $parse->validate()
+    ->validateExpiration()
+    ->validateNotBefore()
+    ->validateAudience('https://example.com')
+    ->validateAudience('https://test.com')
+    ->parse();
 
 // Return the token header claims as an associative array.
 $parsed->getHeader();
@@ -315,47 +311,9 @@ Alternatively a developer can call one of the [RFC](https://tools.ietf.org/html/
 - `getExpiresIn()`
 - `getUsableIn()`
 
-### Token Validation Methods
-
-To Validate a JSON Web Token a developer can use the `ReallySimpleJWT\Validate` class. To use the validate class you need to create and inject a `ReallySimpleJWT\Parsed` object. This is so the validate class can access the information contained within the token. 
-
-```php
-use ReallySimpleJWT\Jwt;
-use ReallySimpleJWT\Parse;
-use ReallySimpleJWT\Validate;
-use ReallySimpleJwt\Decode;
-use ReallySimpleJwt\Encoders\EncodeHS256;
-use ReallySimpleJwt\Helper\Validator;
-
-$token = new Jwt('abc.def.ghi');
-
-$parse = new Parse($jwt, new Decode());
-
-$parsed = $parse->parse();
-
-$validate = new Validate(
-    $parsed,
-    new EncodeHS256(),
-    new Validator()
-);
-
-$validate->signature();
-```
-
-Six validation methods are available which can all be chained:
-
-- `signature()` confirms the token signature is valid.
-- `expiration()` confirms the token expiration claim (`exp`) has not expired.
-- `notBefore()` confirms the token not before claim (`nbf`) has elapsed.
-- `audience()` confirms the token audience claim (`aud`) matches what is expected.
-- `algorithm()` confirms the token algorithm claim (`alg`) matches what is expected and is valid (See: [RFC 7518](https://www.rfc-editor.org/rfc/rfc7518.html)).
-- `algorithmNotNone()` confirms the token algorithm claim (`alg`) is not set to none.
-
-Each validation method will throw a `ReallySimpleJWT\Exception\ValidateException` if there is anything wrong with the supplied token.
-
 ### Custom Encoding
 
-By default this library hashes and encodes the JWT signature via `hash_hmac()` using the sha256 algorithm. If a developer would like to use a customised form of encoding they just need to generate a custom encode class which complies with the `ReallySimpleJWT\Interfaces\Encode` interface. This can then be injected into the `ReallySimpleJWT\Build` and `ReallySimpleJWT\Validate` classes.
+By default this library hashes and encodes the JWT signature via `hash_hmac()` using the sha256 algorithm. If a developer would like to use a customised form of encoding they just need to generate a custom encode class which complies with the `ReallySimpleJWT\Interfaces\Encoder` interface.
 
 ```php
 interface EncodeInterface
@@ -364,47 +322,42 @@ interface EncodeInterface
 
     public function encode(string $toEncode): string;
 
-    public function signature(string $header, string $payload): string;
+    public function decode(string $toDecode): string;
+
+    public function signature(string $header, string $payload, string $secret): string;
 }
 ```
 
 ## Error Messages and Codes
 
-The ReallySimpleJWT library will in a number of situations throw exceptions to highlight problems when creating, parsing and validating JWT tokens. The error codes, messages and their explanations are in the table below.
-
-There are six exception types that may be thrown:
-- `ReallySimpleJWT\Exception\BuildException`
-- `ReallySimpleJWT\Exception\EncodeException`
-- `ReallySimpleJWT\Exception\JwtException`
-- `ReallySimpleJWT\Exception\ParsedException`
-- `ReallySimpleJWT\Exception\TokensException`
-- `ReallySimpleJWT\Exception\ValidateException`
+The ReallySimpleJWT library will in a number of situations throw exceptions to highlight problems when creating and parsing JWT tokens. The error codes, messages and their explanations are below.
 
 | Code | Message                           | Explanation                                |
 |:----:| --------------------------------- | ------------------------------------------ |
-| 1    | Token has an invalid structure.   | Token must have three parts separated by dots. |
-| 2    | Audience claim does not contain provided StringOrURI.        | The `aud` claim must contain the provided string or URI string provided. |
+| 1    | Token is invalid.                 | Token must have three parts separated by dots. |
+| 2    | Audience claim does not contain provided StringOrURI.        | The aud claim must contain the provided string or URI string provided. |
 | 3    | Signature is invalid.             | Signature does not match header / payload content. Could not replicate signature with provided header, payload and secret. |
-| 4    | Expiration claim has expired.     | The `exp` claim must be a valid date time number in the future. |
-| 5    | Not Before claim has not elapsed. | The `nbf` claim must be a valid date time number in the past. |
-| 6    | The header claim [~claim~] is not set. | Attempt was made to access a header claim which does not exist. |
-| 7    | The payload claim [~claim~] is not set. | Attempt was made to access a payload claim which does not exist. |
-| 8    | Invalid payload claim.            | Payload claims must be key value pairs of the format `string: mixed`. |
-| 9    | Invalid secret.                   | Must be 12 characters in length, contain upper and lower case letters, a number, and a special character `*&!@%^#$` |
-| 10   | Algorithm claim is not valid.   | Algorithm should be a valid Digital Signature or MAC Algorithm, or none. See [RFC 7518](https://tools.ietf.org/html/rfc7518). |
-| 11   | Algorithm claim should not be none.      | The `alg` claim should not be set to none. |
+| 4    | Expiration claim has expired.     | The exp claim must be a valid date time number in the future. |
+| 5    | Not Before claim has not elapsed. | The nbf claim must be a valid date time number in the past. |
+| 6    | Expiration claim is not set.      | Attempt was made to validate an Expiration claim which does not exist. |
+| 7    | Not Before claim is not set.      | Attempt was made to validate a Not Before claim which does not exist. |
+| 8    | Invalid payload claim.            | Payload claims must be key value pairs of the format string: mixed. |
+| 9    | Invalid secret.                   | Must be 12 characters in length, contain upper and lower case letters, a number, and a special character `*&!@%^#$`` |
+| 10   | Invalid Audience claim.           | The aud claim can either be a string or an array of strings nothing else. |
+| 11   | Audience claim is not set.      | Attempt was made to validate an Audience claim which does not exist. |
+| 12   | Algorithm claim is not valid.   | Algorithm should be a valid Digital Signature or MAC Algorithm, or none. See RFC 7518. |
+| 13   | Algorithm claim is not set.      | Attempt was made to validate an Algorithm claim which does not exist. |
+| 14   | Algorithm claim should not be none.      | Attempt was made to validate an Algorithm claim which which was set to none. |
 
 ## Token Security
 
-The JWT [RFC 7519](https://tools.ietf.org/html/rfc7519#section-7) allows for the creation of tokens without signatures and without secured / hashed signatures. The ReallySimpleJWT library however imposes security by default as there is no logical reason not to. All created tokens must have a signature and a strong secret, but the library will parse and validate tokens without a secret or a strong secret. The library will not validate tokens without a signature.
+The JWT [RFC 7519](https://tools.ietf.org/html/rfc7519#section-7) allows for the creation of tokens without signatures and without secured / hashed signatures. The ReallySimpleJWT library however imposes security by default as there is no logical reason not to. All created tokens must have a signature and a strong secret, but the library will validate tokens without a secret or a strong secret. The library will not validate tokens without a signature.
 
-By default The ReallySimpleJWT library makes available two encoding implementations, `ReallySimpleJWT\Encoders\EncodeHS256` and `ReallySimpleJWT\Encoders\EncodeHS256Strong`. The latter enforces strict secret security and is used by default to create tokens via the `Token` and `Tokens` classes. The `EncodeHS256` does not impose strict secret security and can be used with the `Build` class to create tokens when required. In addition,
-it is possible to create a custom encode class by implementing the `ReallySimpleJWT\Interfaces\Encode` interface. See the section [Custom Encoding](#custom-encoding).
+It is possible to edit and enhance the implementation of the signature and its security level by creating a custom encode class that implements the `ReallySimpleJWT\Interfaces\Encode` interface, or a custom secret class which implements the `ReallySimpleJWT\Interfaces\Secret` interface. See sections [Custom Encoding](#custom-encoding) and [Custom Secrets](#custom-secrets)
 
+### Signature Secret
 
-### Secret Strength
-
-This JWT library imposes strict secret security via the `EncodeHS256Strong` class. The secret provided must be at least 12 characters in length; contain numbers; upper and lowercase letters; and one of the following special characters `*&!@%^#$`.
+This JWT library imposes strict secret security as follows: the secret must be at least 12 characters in length; contain numbers; upper and lowercase letters; and one of the following special characters `*&!@%^#$`.
 
 ```php
 // Bad Secret
@@ -414,11 +367,44 @@ secret123
 sec!ReT423*&
 ```
 
-The reason for this is that there are lots of [JWT Crackers](https://github.com/lmammino/jwt-cracker) available meaning weak secrets are easy to crack thus rendering the signature security JWT offers useless.
+The reason for this is that there are lots of [JWT Crackers](https://github.com/lmammino/jwt-cracker) available meaning weak secrets are easy to crack thus rendering the security JWT offers useless.
+
+### Custom Secrets
+
+While we advise **strongly against** using weak secrets for JWT signatures we do accept there are systems on the 'internets' which for one reason or another impose weak secrets on developers.
+
+You can setup custom secret validation by creating your own secret class which implements the `ReallySimpleJWT\Interfaces\Secret` interface. You can then pass this custom secret class to the `ReallySimpleJWT\Build` class.
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace ReallySimpleJWT;
+
+use ReallySimpleJWT\Interfaces\Secret;
+
+class CustomSecret implements Secret
+{
+    public function validate(string $secret): bool
+    {
+        // Please do not copy this code, it is an example of weak secret validation.
+        return (bool) preg_match('/[a-z]+/', $secret);
+    }
+}
+
+// Create JWT Builder with Custom Secret Class.
+$build = new Build(
+    'JWT', 
+    new Validate(), 
+    new CustomSecret(), 
+    new Encode()
+);
+```
 
 ## Framework Integration With PSR-JWT Middleware
 
-You can easily integrate ReallySimpleJWT with [PSR-7 / PSR-15](https://www.php-fig.org/psr/psr-15/) compliant frameworks such as [Slim PHP](https://packagist.org/packages/slim/slim) and Laminas by using the [PSR-JWT library](https://github.com/RobDWaller/psr-jwt).
+You can easily integrate ReallySimpleJWT with [PSR-7 / PSR-15](https://www.php-fig.org/psr/psr-15/) compliant frameworks such as [Slim PHP](https://packagist.org/packages/slim/slim) and Zend Expressive by using the [PSR-JWT library](https://github.com/RobDWaller/psr-jwt).
 
 For example integration with Slim PHP only requires a few lines of code:
 
@@ -475,4 +461,4 @@ MIT
 
 Rob Waller
 
-Twitter: [@RobDWaller](https://twitter.com/RobDWaller)
+Twitter: [@robdwaller](https://twitter.com/RobDWaller)

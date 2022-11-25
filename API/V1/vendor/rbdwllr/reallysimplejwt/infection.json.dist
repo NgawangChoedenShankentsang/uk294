@@ -1,4 +1,3 @@
-
 {
     "timeout": 10,
     "source": {
@@ -6,14 +5,10 @@
             "src"
         ]
     },
-    "tmpDir": "/opt/tmp-folder",
     "logs": {
         "text": "infection.log",
-        "summary": "infection-summary.log",
-        "debug": "infection-debug.log",
-        "perMutator": "infection-per-mutator.md",
-        "stryker": {
-            "badge": "master"
+        "badge": {
+            "branch": "master"
         }
     },
     "mutators": {

@@ -1,25 +1,42 @@
+//Deklaring Variable name and Fetching values.
 var usernameField = document.getElementById("username-field");
 var passwordField = document.getElementById("password-field");
-var requestLogin;
+var sendRequest;
 
+/**
+ * AUTHENTIFICATION Request
+ * The login form itself has an onsubmit event that it calls. 
+ * submits an AJAX request for the login form. 
+ * send request to backend server.
+ * @param {*} event The event object.
+ */
 function pressedButton(event) {
-  event.preventDefault();
+    event.preventDefault();
 
-  var signInData = {
-    username: usernameField.value,
-    password: passwordField.value 
-  };
+    var data = {
+        username: usernameField.value,
+        password: passwordField.value
+    };
+        sendRequest = new XMLHttpRequest();
+        sendRequest.open("POST", "API/V1/Authenticate");
+        sendRequest.onreadystatechange = requestUpdate;
+        sendRequest.send(JSON.stringify(data));
 
-  requestLogin = new XMLHttpRequest();
-  requestLogin.open("POST", "../API/V1/Authenticate");
-  requestLogin.onreadystatechange = requestLogin;
-  requestLogin.send(JSON.stringify(signInData));
 }
 
-  function requestLogin(event) {
-    if (requestLogin.readyState < 4) {
-      return;
-    }
-    var responseData = JSON.parse(requestLogin.responseText);
-    alert(responseData);
-  }
+/**
+ * @param {*} event The event object
+ * Check readyState
+*/
+
+function requestUpdate(event) {
+    //Checking If the request has not received an Answer.
+    if (sendRequest.readyState < 4) {
+        return;
+    }
+   //print in console
+   alert(sendRequest.status);
+   alert(sendRequest.statusText);
+}
+
+

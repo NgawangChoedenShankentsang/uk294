@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -7,52 +8,54 @@
     <title>Document</title>
     <link rel="stylesheet" type="text/css" href="stylesheets/style.css">
 </head>
+
 <body>
 
     <div class="navbar">
         <a href="index.html">HOME</a>
-        <a class = "active" href="login.html">LOGIN</a>
+        <a class="active" href="login.html">LOGIN</a>
 
         <div class="dropdown">
             <button class="dropbtn">PRODUCT<i class="fa fa-caret-down"></i></button>
             <div class="dropdown-content">
-              <a href="product_webpage/create_product.html">CREATE</a>
-              <a href="product_webpage/update_product.html">UPDATE</a>
-              <a href="product_webpage/delete_product.html">DELETE</a>
-              <a href="product_webpage/read_product.html">READ</a>
-              <a href="product_webpage/all_product.html">LIST ALL</a>
+                <a href="product_webpage/create_product.html">CREATE</a>
+                <a href="product_webpage/update_product.html">UPDATE</a>
+                <a href="product_webpage/delete_product.html">DELETE</a>
+                <a href="product_webpage/read_product.html">READ</a>
+                <a href="product_webpage/all_product.html">LIST ALL</a>
             </div>
-        </div> 
+        </div>
         <div class="dropdown">
             <button class="dropbtn">CATEGORY<i class="fa fa-caret-down"></i></button>
             <div class="dropdown-content">
-              <a href="catgory_webpage/create_category.html">CREATE</a>
-              <a href="catgory_webpage/update_category.html">UPDATE</a>
-              <a href="catgory_webpage/delete_category.html">DELETE</a>
-              <a href="catgory_webpage/read_category.html">READ</a>
-              <a href="product_webpage/all_product.html">LIST ALL</a>
+                <a href="catgory_webpage/create_category.html">CREATE</a>
+                <a href="catgory_webpage/update_category.html">UPDATE</a>
+                <a href="catgory_webpage/delete_category.html">DELETE</a>
+                <a href="catgory_webpage/read_category.html">READ</a>
+                <a href="product_webpage/all_product.html">LIST ALL</a>
             </div>
-        </div> 
+        </div>
     </div>
 
     <div class="content-container">
         <div class="content">
-		<h1>	&lt; AUTHENTIFICATION &gt; </h1>
-		<form id="login-form" onsubmit="pressedButton(event)">
-            <div class="field">
-			<label for="username-field">USERNAME</label>
-			<input type="text" id="username-field" placeholder="ngawang12">
-            </div>
-            <div class="field">
-			<label for="password-field">PASSWORD</label>
-			<input type="password" id="password-field" placeholder="********">
-            </div>
-            <div class="field">
-			<button class="submit" type="submit">LOG IN</button>
-            </div>
-		</form>
-		</div>
-	</div>
+            <h1> &lt; AUTHENTIFICATION &gt; </h1>
+            <form id="login-form" onsubmit="pressedButton(event);">
+                <div class="field">
+                    <label for="username-field">USERNAME</label>
+                    <input type="text" id="username-field" placeholder="ngawang12" required>
+                </div>
+                <div class="field">
+                    <label for="password-field">PASSWORD</label>
+                    <input type="password" id="password-field" placeholder="********" required>
+                </div>
+                <div class="field">
+                    <button id="submit" class="submit">LOG IN</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <script src="controller/authenticator.js"></script>
 </body>
+
 </html>

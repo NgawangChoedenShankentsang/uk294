@@ -1,21 +1,35 @@
-var calculateRequest;
+var request;
+
+/**
+ * DELETE Request
+ * send request to backend server.
+ * @param {*} event The event object.
+ */
 function pressedButton(event) {
     var data = document.getElementById("id-field")   
 
-    calculateRequest = new XMLHttpRequest();
-    calculateRequest.open("DELETE", "../API/V1/Delete/Category/" );
-    calculateRequest.onreadystatechange = requestUpdate;
-    calculateRequest.send(data); 
+    request = new XMLHttpRequest();
+    request.open("DELETE", "API/V1/Delete/Category" );
+    request.onreadystatechange = requestUpdate;
+    request.send(data); 
 } 
 
+/**
+ * @param {*} event The event object
+ * Check readyState
+*/
 function requestUpdate(event) {
-    if (calculateRequest.readyState < 4) {
+    //Checking If the request has not received an Answer.
+    if (request.readyState < 4) {
         return;
     }
     
-    var responeData = JSON.parse(calculateRequest.responseText);
+    var responeData = JSON.parse(request.responseText);
     console.log(responeData.result);
+    //alert
     alert(responeData.result); 
 }
-var calculateButton = document.getElementById("submit");
-calculateButton.addEventListener("submit", pressedButton);
+
+//Addding listener to the button
+var button = document.getElementById("submit");
+button.addEventListener("submit", pressedButton);

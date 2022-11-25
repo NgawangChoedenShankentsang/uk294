@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace ReallySimpleJWT;
 
-use ReallySimpleJWT\Exception\ParsedException;
+use ReallySimpleJWT\Jwt;
 
 /**
- * This value object is generated when the JWT has been parsed.
- *
- * It contains the original JWT value object, and the header and payload
+ * This 'value object' is generated when the JWT has been parsed and validated,
+ * it contains the original JWT value object, and the header and payload
  * associative arrays. The class also offers helper methods which provide
  * access to the header and payload claim data.
  */
@@ -17,31 +16,39 @@ class Parsed
 {
     /**
      * The pre-parsed JWT value object
+     *
+     * @var Jwt
      */
-    private Jwt $jwt;
+    private $jwt;
 
     /**
      * Associative array of header claims
      *
-     * @var mixed[]
+     * @var array
      */
-    private array $header;
+    private $header;
 
     /**
      * Associative array of payload claims
      *
-     * @var mixed[]
+     * @var array
      */
-    private array $payload;
+    private $payload;
 
     /**
      * The JWT signature string
+     *
+     * @var string
      */
-    private string $signature;
+    private $signature;
 
     /**
-     * @param mixed[] $header
-     * @param mixed[] $payload
+     * The Parsed constructor
+     *
+     * @param Jwt $jwt
+     * @param array $header
+     * @param array $payload
+     * @param string $signature
      */
     public function __construct(Jwt $jwt, array $header, array $payload, string $signature)
     {
@@ -54,20 +61,10 @@ class Parsed
         $this->signature = $signature;
     }
 
-    public function getHeaderClaim(string $claim): mixed
-    {
-        return $this->header[$claim] ??
-            throw new ParsedException('The header claim ' . $claim . ' is not set.', 6);
-    }
-
-    public function getPayloadClaim(string $claim): mixed
-    {
-        return $this->payload[$claim] ??
-            throw new ParsedException('The payload claim ' . $claim . ' is not set.', 7);
-    }
-
     /**
      * Return the original JWT value object.
+     *
+     * @return Jwt
      */
     public function getJwt(): Jwt
     {
@@ -77,7 +74,7 @@ class Parsed
     /**
      * Get the header claims data as an associative array.
      *
-     * @return mixed[]
+     * @return array
      */
     public function getHeader(): array
     {
@@ -86,32 +83,38 @@ class Parsed
 
     /**
      * Access the algorithm claim from the header.
+     *
+     * @return string
      */
     public function getAlgorithm(): string
     {
-        return $this->getHeaderClaim('alg');
+        return $this->header['alg'] ?? '';
     }
 
     /**
      * Access the type claim from the header.
+     *
+     * @return string
      */
     public function getType(): string
     {
-        return $this->getHeaderClaim('typ');
+        return $this->header['typ'] ?? '';
     }
 
     /**
      * Access the content type claim from the header.
+     *
+     * @return string
      */
     public function getContentType(): string
     {
-        return $this->getHeaderClaim('cty');
+        return $this->header['cty'] ?? '';
     }
 
     /**
      * Get the payload claims data as an associative array.
      *
-     * @return mixed[]
+     * @return array
      */
     public function getPayload(): array
     {
@@ -120,40 +123,49 @@ class Parsed
 
     /**
      * Access the issuer claim from the payload.
+     *
+     * @return string
      */
     public function getIssuer(): string
     {
-        return $this->getPayloadClaim('iss');
+        return $this->payload['iss'] ?? '';
     }
 
     /**
      * Access the subject claim from the payload.
+     *
+     * @return string
      */
     public function getSubject(): string
     {
-        return $this->getPayloadClaim('sub');
+        return $this->payload['sub'] ?? '';
     }
 
     /**
-     * Access the audience claim from the payload.
+     * Access the audience claim from the payload. Can return a string or an
+     * array. Will return an empty string if not set.
      *
-     * @return string|string[]
+     * @return string|array
      */
-    public function getAudience(): string|array
+    public function getAudience()
     {
-        return $this->getPayloadClaim('aud');
+        return $this->payload['aud'] ?? '';
     }
 
     /**
      * Access the expiration claim from the payload.
+     *
+     * @return int
      */
     public function getExpiration(): int
     {
-        return $this->getPayloadClaim('exp');
+        return $this->payload['exp'] ?? 0;
     }
 
     /**
      * Calculate how long the token has until it expires.
+     *
+     * @return int
      */
     public function getExpiresIn(): int
     {
@@ -163,15 +175,19 @@ class Parsed
 
     /**
      * Access the not before claim from the payload.
+     *
+     * @return int
      */
     public function getNotBefore(): int
     {
-        return $this->getPayloadClaim('nbf');
+        return $this->payload['nbf'] ?? 0;
     }
 
     /**
      * Calculate how long until the Not Before claim expires and the token
      * is usable.
+     *
+     * @return int
      */
     public function getUsableIn(): int
     {
@@ -181,22 +197,28 @@ class Parsed
 
     /**
      * Access the issued at claim from the payload.
+     *
+     * @return int
      */
     public function getIssuedAt(): int
     {
-        return $this->getPayloadClaim('iat');
+        return $this->payload['iat'] ?? 0;
     }
 
     /**
      * Access the JWT Id claim from the payload.
+     *
+     * @return string
      */
     public function getJwtId(): string
     {
-        return $this->getPayloadClaim('jti');
+        return $this->payload['jti'] ?? '';
     }
 
     /**
      * Get the JWT signature string if required.
+     *
+     * @return string
      */
     public function getSignature(): string
     {

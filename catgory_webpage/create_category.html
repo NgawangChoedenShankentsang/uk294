@@ -38,7 +38,7 @@
     <div class="content-container">
         <div class="content">
             <h1>	&lt; CREATE  &gt; </h1>
-            <form onsubmit="onEditCategoryFormSubmitted(event);">
+            <form>
                 <div class="field">
                 <label for="name-field">NAME</label>
                 <input type="text" id="name-field" required>
@@ -50,10 +50,11 @@
                 </div>
     
                 <div class="field">
-                <button type="submit">CREATE & CLOSE</button>
+                <button id="submit">CREATE & CLOSE</button>
                 </div>
             </form>
         </div>
     </div>  
+    <script src="../controller/create_category.js"></script>
 </body>
 </html>

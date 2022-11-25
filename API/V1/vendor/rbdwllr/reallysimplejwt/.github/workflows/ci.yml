@@ -4,20 +4,14 @@ on: [push, pull_request, release]
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
-      fail-fast: false
       matrix:
-        php-versions: ['8.0', '8.1']
-        os: [ubuntu-18.04, ubuntu-20.04]
+        php-versions: ['7.2', '7.3', '7.4']
     name: PHP ${{ matrix.php-versions }} Test
-    env:
-      PHP_CS_FIXER_IGNORE_ENV: 1
     steps:
     - name: Checkout
       uses: actions/checkout@v2
-      with:
-          fetch-depth: 0
 
     - name: Setup PHP
       uses: shivammathur/setup-php@v2
@@ -29,25 +23,13 @@ jobs:
     - name: Validate Composer
       run: composer validate --strict
 
-    - name: Install Composer Dependencies PHP
-      run: composer install --no-interaction --prefer-dist
-
+    - name: Install Composer Dependencies 
+      run: composer install --no-interaction --prefer-source
+    
     - name: Run Tests
-      run: composer run-script pipeline
-      env:
+      run: composer pipeline
+      env: 
         STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
 
     - name: Code Coverage
       run: bash <(curl -s https://codecov.io/bash)
-
-    - name: Fix Code Coverage File Paths
-      run: sed -i -e 's/\/home\/runner\/work\/ReallySimpleJWT\/ReallySimpleJWT\///g' coverage.xml
-
-    - name: Fix Test Report File Paths
-      run: sed -i -e 's/\/home\/runner\/work\/ReallySimpleJWT\/ReallySimpleJWT\///g' test-report.xml
-
-    - name: SonarCloud Scan
-      uses: sonarsource/sonarcloud-github-action@v1.6
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
